@@ -1,28 +1,48 @@
 #!/bin/bash
 
-error () {
-	echo >&2 "Missing parameter!"
-    echo >&2 "[-up] to enable SSO support."
-    echo >&2 "[-down] to disable SSO support."
+display_help () {
+    echo "Usage: $0 [option]" >&2
+    echo
+    echo "   -e, --enable               Change Heroku CLI to use HTTPS (compatible with SSO)"
+    echo "   -d, --disable              Change Heroku CLI to use SSH (incompatible with SSO)"
+    echo
     exit 1
 }
 
-enable () {
+enable_sso () {
 	git config --global url."https://git.heroku.com/".insteadOf "git@heroku.com:"
 	echo "Heroku configured for HTTPS. You may enable SSO."
-	exit 0
 }
 
-disable () {
+disable_sso () {
 	git config --global --unset url.https://git.heroku.com/.insteadOf
 	echo "Heroku configured for SSH. You may now disable SSO."
-	exit 0
 }
 
-if [ "$1" == "-up" ]; then
-	enable
-elif [ "$1" == "-down" ]; then
-	disable
-else
-	error
-fi
+while :
+do
+	case "$1" in
+		-h | --help)
+			display_help
+			exit 0
+			;;
+		-e | --enable)
+			enable_sso
+			exit 0
+			;;
+		-d | --disable)
+			disable_sso
+			exit 0
+			;;
+		--)
+			break
+			;;
+		-*)
+			echo "Error: Unknown option: $1" >&2
+			exit 1
+			;;
+		*)
+			break
+			;;
+	esac
+done

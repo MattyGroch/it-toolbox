@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ -z "$@" ]]; then
+    echo >&2 "No argument given. Use [-h] to get help."
+    exit 1
+fi
+
 display_help () {
     echo "Usage: $0 [option]" >&2
     echo

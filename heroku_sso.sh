@@ -1,7 +1,7 @@
 #!/bin/bash
 
 error () {
-	echo >&2 "Missing parameter!"
+    echo >&2 "Missing parameter!"
     echo >&2 "[-up] to enable SSO support."
     echo >&2 "[-down] to disable SSO support."
     exit 1

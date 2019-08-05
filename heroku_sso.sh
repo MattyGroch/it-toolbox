@@ -1,10 +1,5 @@
 #!/bin/bash
 
-if [[ -z "$@" ]]; then
-    echo >&2 "No argument given. Use [-h] to get help."
-    exit 1
-fi
-
 display_help () {
     echo "Usage: $0 [option]" >&2
     echo
@@ -39,15 +34,14 @@ do
 			disable_sso
 			exit 0
 			;;
-		--)
-			break
-			;;
 		-*)
 			echo "Error: Unknown option: $1" >&2
 			exit 1
 			;;
 		*)
 			break
+			echo >&2 "Invalid argument given. Use [-h] to get help."
+			exit 1
 			;;
 	esac
 done

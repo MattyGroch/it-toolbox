@@ -39,7 +39,6 @@ do
 			exit 1
 			;;
 		*)
-			break
 			echo >&2 "Invalid argument given. Use [-h] to get help."
 			exit 1
 			;;

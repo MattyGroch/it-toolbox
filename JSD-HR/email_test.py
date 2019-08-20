@@ -1,6 +1,7 @@
 import smtplib
 import ssl
 import os
+import sys
 import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -29,7 +30,8 @@ This message is for the manager."""
 This message is for IT."""
         return message
     else:
-        return "Not a valid template."
+        print("Template failed to generate.")
+        sys.exit(1)
 
 
 def send_email(toaddress, message):
@@ -45,4 +47,4 @@ def send_email(toaddress, message):
         server.sendmail(gmail_user, toaddress, message)
 
 
-send_email("matt.grochocinski@snapsheet.me",format_email("manager"))
+send_email("matt.grochocinski@snapsheet.me",format_email("tacocat"))

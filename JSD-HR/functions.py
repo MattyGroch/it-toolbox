@@ -61,19 +61,21 @@ def jira_parser():
         issue_description = request['issue']['fields']['description']
     except:
         return "Error with Jira ticket info."
-    return {
-        issue_id,
-        issue_key,
-        issue_priority,
-        issue_creator_username,
-        issue_creator_displayname,
-        issue_reporter_username,
-        issue_reporter_displayname,
-        issue_type,
-        issue_project,
-        issue_summary,
-        issue_description
-        }
 
+    jira_dict = {
+        'id': issue_id,
+        'key': issue_key,
+        'priority': issue_priority,
+        'createdby_user': issue_creator_username,
+        'createdby_dispname': issue_creator_displayname,
+        'reporter_user': issue_reporter_username,
+        'reporter_dispname': issue_reporter_displayname,
+        'type': issue_type,
+        'project': issue_project,
+        'summary': issue_summary,
+        'description': issue_description
+    }
+
+    return jira_dict
 
 def onboard_user():

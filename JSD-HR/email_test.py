@@ -4,7 +4,8 @@ import os
 import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-
+from dotenv import load_dotenv
+load_dotenv()
 
 def format_email(template):
     if template == "employee":
@@ -32,7 +33,8 @@ This message is for IT."""
 
 
 def send_email(toaddress, message):
-
+    gmail_user = os.getenv("EMAIL")
+    gmail_password = os.getenv("PASS")
     port = 465  # For SSL
 
     # Create a secure SSL context

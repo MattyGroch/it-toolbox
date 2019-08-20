@@ -9,14 +9,10 @@ app = Chalice(app_name='JSD-HR')
 app.debug = False
 
 
-@app.route('/onboard', methods=['POST'])
+@app.route('/onboard/{issue}', methods=['POST'])
 def index():
     try:
-        functions.jira_parser(app.current_request.json_body)
-        functions.send_email(
-            "helpdesk@snapsheet.me",
-            functions.format_email("it")
-            )
+        onboard_user(issue)
         return {'status': "Success."}
     except:
         return {'status': "An error ocurred."}

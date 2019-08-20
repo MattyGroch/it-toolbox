@@ -1,16 +1,3 @@
-HEADERS:
-{
-  "content-length": "18065",
-  "accept": "*/*",
-  "content-type": "application/json; charset=UTF-8",
-  "user-agent": "Atlassian Webhook HTTP Client",
-  "accept-encoding": "gzip,deflate",
-  "x-b3-traceid": "e32aa6a01cd99362",
-  "x-b3-spanid": "e32aa6a01cd99362",
-  "x-b3-sampled": "1"
-}
-
-BODY:
 {
   "transition": {
     "workflowId": 31827,

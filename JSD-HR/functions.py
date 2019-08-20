@@ -74,3 +74,6 @@ def jira_parser():
         issue_summary,
         issue_description
         }
+
+
+def onboard_user():

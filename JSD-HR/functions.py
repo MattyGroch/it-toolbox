@@ -10,7 +10,7 @@ from email import encoders
 from dotenv import load_dotenv
 load_dotenv()
 
-def generate_email(template):
+def generate_email(template,employee):
     if template == "employee":
         message = f"""Subject: Hi there
 

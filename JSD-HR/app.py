@@ -51,7 +51,7 @@ def index():
         payload = app.current_request.json_body
         issue = JiraIssue(payload)
         employee = Employee(payload)
-        functions.send_email("matt.grochocinski@gmail.com",functions.generate_email("employee"))
+        functions.send_email("matt.grochocinski@gmail.com",functions.generate_email("employee",employee))
         return {'status': "Success."}
     except:
         return {'status': "An error ocurred."}

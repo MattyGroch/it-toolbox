@@ -9,23 +9,24 @@ app = Chalice(app_name='JSD-HR')
 app.debug = False
 
 class JiraIssue:
-    def __init__(self, request):
-        self.id = request['issue']['id']
-        self.key = request['issue']['key']
-        self.priority = request['issue']['fields']['priority']['name']
-        self.creator_username = request['issue']['fields']['creator']['name']
-        self.creator_displayname = request['issue']['fields']['creator']['displayName']
-        self.reporter_username = request['issue']['fields']['reporter']['name']
-        self.reporter_displayname = request['issue']['fields']['reporter']['displayName']
-        self.type = request['issue']['fields']['issuetype']['name']
-        self.project = request['issue']['fields']['project']['key']
-        self.summary = request['issue']['fields']['summary']
-        self.description = request['issue']['fields']['description']
+    def __init__(self, payload):
+        issue = payload['issue']
+        self.id = issue['id']
+        self.key = issue['key']
+        self.priority = issue['fields']['priority']['name']
+        self.creator_username = issue['fields']['creator']['name']
+        self.creator_displayname = issue['fields']['creator']['displayName']
+        self.reporter_username = issue['fields']['reporter']['name']
+        self.reporter_displayname = issue['fields']['reporter']['displayName']
+        self.type = issue['fields']['issuetype']['name']
+        self.project = issue['fields']['project']['key']
+        self.summary = issue['fields']['summary']
+        self.description = issue['fields']['description']
 
 
 class Employee:
-    def __init__(self, request):
-        fields = request['issue']['fields']
+    def __init__(self, payload):
+        fields = payload['issue']['fields']
         self.wage_type = fields['customfield_10161']['value']
         self.wage_amount = fields['customfield_10162']
         self.email = fields['customfield_10163']
@@ -50,8 +51,7 @@ def index():
         payload = app.current_request.json_body
         issue = JiraIssue(payload)
         employee = Employee(payload)
-        functions.send_email("helpdesk@snapsheet.me",functions.generate_email("it"))
-        functions.send_email("payroll@email.com",functions.generate_email("payroll"))
+        functions.send_email("matt.grochocinski@gmail.com",functions.generate_email("employee"))
         return {'status': "Success."}
     except:
         return {'status': "An error ocurred."}

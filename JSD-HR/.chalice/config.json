@@ -5,9 +5,8 @@
     "dev": {
       "api_gateway_stage": "api",
       "environment_variables": {
-        "VARIABLE_1": "value",
-        "EMAIL_ACCT": "",
-        "EMAIL_PWD": ""
+        "VARIABLE_1": "value"
+      }
     }
   }
 }

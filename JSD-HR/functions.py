@@ -12,9 +12,9 @@ load_dotenv()
 
 def generate_email(template):
     if template == "employee":
-        message = """Subject: Hi there
+        message = f"""Subject: Hi there
 
-This message is for the employee.
+This message is for {employee.firstname} {employee.lastname}.
 
 Best,
 Snapsheet HR"""

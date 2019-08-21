@@ -10,14 +10,69 @@ from email import encoders
 from dotenv import load_dotenv
 load_dotenv()
 
+
+class JiraIssue:
+    def __init__(self, payload):
+        issue = payload['issue']
+        self.id = issue['id']
+        self.key = issue['key']
+        self.priority = issue['fields']['priority']['name']
+        self.creator_username = issue['fields']['creator']['name']
+        self.creator_displayname = issue['fields']['creator']['displayName']
+        self.reporter_username = issue['fields']['reporter']['name']
+        self.reporter_displayname = issue['fields']['reporter']['displayName']
+        self.type = issue['fields']['issuetype']['name']
+        self.project = issue['fields']['project']['key']
+        self.summary = issue['fields']['summary']
+        self.description = issue['fields']['description']
+        self.type = issue['issuetype']['name']
+
+
+class Employee:
+    def __init__(self, payload):
+        fields = payload['issue']['fields']
+        self.wage_type = fields['customfield_10161']['value']
+        self.wage_amount = fields['customfield_10162']
+        self.email = fields['customfield_10163']
+        self.phone = fields['customfield_10164']
+        self.flsa = fields['customfield_10165']['value']
+        self.address1 = fields['customfield_10150']
+        self.address2 = fields['customfield_10151']
+        self.city = fields['customfield_10152']
+        self.state = fields['customfield_10153']['value']
+        self.zip = fields['customfield_10154']
+        self.department = fields['customfield_10149']['value']
+        self.firstname = fields['customfield_10142']
+        self.lastname = fields['customfield_10143']
+        self.preferredname = fields['customfield_10144']
+        self.manager = fields['customfield_10145']['displayName']
+        self.manager_username = fields['customfield_10145']['name']
+        self.manager_email = self.manager_username + "@snapsheet.me"
+        self.location = fields['customfield_10146']['value']
+
+
 def generate_email(template, employee):
     if template == "employee":
-        message = f"""Subject: Hi there
+        message = f"""Subject: Welcome to Snapsheet, {employee.preferredname}!
 
-This message is for {employee.firstname} {employee.lastname}.
+Hi {employee.preferredname},
 
-Best,
-Snapsheet HR"""
+We are so happy to have you joining us next week! Please arrive to the office at 1 N. Dearborn at 9:00am. Our Office Manager will greet you upon arrival to the 6th floor.
+
+
+New Hire Paperwork:
+You will receive an email from Gina Kraft with a link to PrismHR. Please complete the onboarding documents.
+
+Benefits:
+Please complete the benefits enrollment section of the onboarding site. You MUST have this completed by the end of your first week. If you have any questions, feel free to contact me at carly.stieve@snapsheet.me
+
+Forms to bring the first day:
+We are required by federal regulations to verify your employment eligibility. Bring supporting documentation for your I-9, in original form. Please refer to the I-9 section of the onboarding site to see a list acceptable documents.
+
+
+We are excited to have you on the team!
+
+See you soon!"""
         return message
     elif template == "payroll":
         message = """Subject: Hi there
@@ -28,9 +83,20 @@ Best,
 Snapsheet HR"""
         return message
     elif template == "manager":
-        message = """Subject: Hi there
+        message = f"""Subject: New Hire - {employee.preferredname} {employee.lastname}
 
-This message is for the manager."""
+Hi There!
+
+Please follow the attached New Hire Checklist as a reminder to set up seating, goals, lunches, etc. in regards to employee name and start date! Also, please provide the following information at your earliest convenience:
+
+    -Where would you like her to sit?
+    -Does she need any special equipment from IT?
+    -Will she need a cell phone reimbursement? As a reminder, the employee is eligible for a cell phone reimbursement if they are expected to use their personal mobile device for work-related purposes.
+
+Let me know if you have any questions and I look forward to hearing from you!
+
+Best,
+Snapsheet HR"""
         return message
     elif template == "it":
         message = """Subject: Hi there
@@ -54,6 +120,70 @@ def send_email(toaddress, message):
         server.login(gmail_user, gmail_password)
         server.sendmail(gmail_user, toaddress, message)
 
+
+def onboard_user(issue, employee):
+    try:
+        send_email("@cognos.com", generate_email("payroll", employee))
+        functions.add_jira_comment(issue.id, "Cognos email sent.")
+    except:
+        functions.add_jira_comment(issue.id, "Cognos email failed to send.")
+    try:
+        send_email("helpdesk@snapsheet.me", generate_email("it", employee))
+        send_email(employee.email, generate_email("employee", employee))
+        send_email(employee.manager_email, generate_email("manager", employee))
+
+
+def change_user(issue, employee):
+    try:
+        return {'status': "Success."}
+    except:
+        return {'status': "An error ocurred."}
+
+
+def terminate_user(issue, employee):
+    try:
+        return {'status': "Success."}
+    except:
+        return {'status': "An error ocurred."}
+
+
+def add_jira_comment(issueId, commentBody):
+    url = os.getenv("ATLASSIAN_URL") + "/rest/api/3/issue/" + issueId + "/comment"
+    auth_token = "Bearer " + os.getenv("JIRA_API_TOKEN")
+    headers = {
+       "Accept": "application/json",
+       "Content-Type": "application/json",
+       "Authorization": auth_token
+    }
+    payload = json.dumps( {
+      "visibility": {
+        "type": "role",
+        "value": "Administrators"
+      },
+      "body": {
+        "type": "doc",
+        "version": 1,
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "text": comment_body,
+                "type": "text"
+              }
+            ]
+          }
+        ]
+      }
+    } )
+    response = requests.request(
+       "POST",
+       url,
+       data=payload,
+       headers=headers
+    )
+
+    print(json.dumps(json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")))
 
 # def jira_parser(request):
 #     try:

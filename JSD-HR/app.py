@@ -18,20 +18,20 @@ def index():
     if issue.type == "New Hire":
         try:
             onboard_user(issue, employee)
-            return {'status': "Success."}
+            return {'status': "Onboarding success."}
         except:
-            return {'status': "An error ocurred."}
+            return {'status': "An error ocurred with onboarding."}
     elif issue.type == "Termination":
         try:
             terminate_user(issue, employee)
-            return {'status': "Success."}
+            return {'status': "Termination success."}
         except:
-            return {'status': "An error ocurred."}
+            return {'status': "An error ocurred with termination."}
     elif issue.type == "Information Change":
         try:
             change_user(issue, employee)
-            return {'status': "Success."}
+            return {'status': "Information change success."}
         except:
-            return {'status': "An error ocurred."}
+            return {'status': "An error ocurred with information change."}
     else:
         return {'status': "Unknown issue type."}

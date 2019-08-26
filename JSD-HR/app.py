@@ -27,7 +27,7 @@ def index():
             return {'status': "Termination success."}
         except:
             return {'status': "An error ocurred with termination."}
-    elif issue.type == "Information Change":
+    elif issue.type == "Change":
         try:
             change_user(issue, employee)
             return {'status': "Information change success."}

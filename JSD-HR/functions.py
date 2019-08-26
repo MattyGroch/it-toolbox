@@ -41,6 +41,7 @@ class Employee:
         self.city = fields['customfield_10152']
         self.state = fields['customfield_10153']['value']
         self.zip = fields['customfield_10154']
+        self.title = fields['customfield_10167']
         self.department = fields['customfield_10149']['value']
         self.firstname = fields['customfield_10142']
         self.lastname = fields['customfield_10143']
@@ -57,14 +58,14 @@ def generate_email(template, employee):
 
 Hi {employee.preferredname},
 
-We are so happy to have you joining us next week! Please arrive to the office at 1 N. Dearborn at 9:00am. Our Office Manager will greet you upon arrival to the 6th floor.
+We are so happy to have you joining us! Please arrive to the office at 1 N. Dearborn at 9:00am on your start date. Our Office Manager will greet you upon arrival to the 6th floor.
 
 
 New Hire Paperwork:
 You will receive an email from Gina Kraft with a link to PrismHR. Please complete the onboarding documents.
 
 Benefits:
-Please complete the benefits enrollment section of the onboarding site. You MUST have this completed by the end of your first week. If you have any questions, feel free to contact me at carly.stieve@snapsheet.me
+Please complete the benefits enrollment section of the onboarding site. You MUST have this completed by the end of your first week. If you have any questions, feel free to contact us at carly.stieve@snapsheet.me
 
 Forms to bring the first day:
 We are required by federal regulations to verify your employment eligibility. Bring supporting documentation for your I-9, in original form. Please refer to the I-9 section of the onboarding site to see a list acceptable documents.

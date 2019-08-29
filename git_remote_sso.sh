@@ -13,14 +13,14 @@ enable_sso () {
 	git config --global url."https://git.heroku.com/".insteadOf git@heroku.com:
   git config --global url."https://github.com/".insteadOf git@github.com:
   git config --global url."https://".insteadOf git://
-	echo "CLI configured for HTTPS. You may enable SSO."
+	echo "Global config changed to use HTTPS. You may enable SSO."
 }
 
 disable_sso () {
 	git config --global --unset url.https://git.heroku.com/.insteadOf
   git config --global --unset url.https://github.com/.insteadOf
   git config --global --unset url.https://.insteadOf
-	echo "CLI configured for SSH. You may now disable SSO."
+	echo "Global config reverted to original settings. You may now disable SSO."
 }
 
 while :

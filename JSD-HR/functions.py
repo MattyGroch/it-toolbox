@@ -46,10 +46,13 @@ class Employee:
         self.firstname = fields['customfield_10142']
         self.lastname = fields['customfield_10143']
         self.preferredname = fields['customfield_10144']
+        self.pronouns = fields['customfield_10170']
         self.manager = fields['customfield_10145']['displayName']
         self.manager_username = fields['customfield_10145']['name']
         self.manager_email = self.manager_username + "@snapsheet.me"
         self.location = fields['customfield_10146']['value']
+        self.cell_reimburse = fields['customfield_10168']['value']
+        self.internet_reimburse = fields['customfield_10169']['value']
 
 
 def generate_email(template, employee):
@@ -125,13 +128,11 @@ def send_email(toaddress, message):
 def onboard_user(issue, employee):
     try:
         send_email("@cognos.com", generate_email("payroll", employee))
-        functions.add_jira_comment(issue.id, "Cognos email sent.")
+        add_jira_comment(issue.id, "Cognos email sent.")
     except:
-        functions.add_jira_comment(issue.id, "Cognos email failed to send.")
+        add_jira_comment(issue.id, "Cognos email failed to send.")
     try:
-        send_email("helpdesk@snapsheet.me", generate_email("it", employee))
-        send_email(employee.email, generate_email("employee", employee))
-        send_email(employee.manager_email, generate_email("manager", employee))
+        create_jira_issue("SDESK", employee)
 
 
 def change_user(issue, employee):
@@ -150,11 +151,11 @@ def terminate_user(issue, employee):
 
 def add_jira_comment(issueId, commentBody):
     url = os.getenv("ATLASSIAN_URL") + "/rest/api/3/issue/" + issueId + "/comment"
-    auth_token = "Bearer " + os.getenv("JIRA_API_TOKEN")
+    auth = "Bearer " + os.getenv("JIRA_API_AUTH")
     headers = {
        "Accept": "application/json",
        "Content-Type": "application/json",
-       "Authorization": auth_token
+       "Authorization": auth
     }
     payload = json.dumps( {
       "visibility": {
@@ -186,6 +187,39 @@ def add_jira_comment(issueId, commentBody):
 
     print(json.dumps(json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")))
 
+
+def create_jira_issue(projectKey, employee):
+    url = os.getenv("ATLASSIAN_URL") + "/rest/api/2/issue"
+
+    auth = "Bearer " + os.getenv("JIRA_API_AUTH")
+
+    headers = {
+       "Accept": "application/json",
+       "Content-Type": "application/json",
+       "Authorization": auth
+    }
+
+    payload = json.dumps( {
+    "fields": {
+       "project":
+       {
+          "key": projectKey
+       },
+       "summary": f"New Hire: {employee.firstname} {employee.lastname}",
+       "description": f"""Manager: {employee.manager}
+       """,
+       "issuetype": {
+          "name": "Service Request"
+       }
+   }
+} )
+
+    response = requests.request(
+       "POST",
+       url,
+       data=payload,
+       headers=headers
+    )
 # def jira_parser(request):
 #     try:
 #     # parse request payload data

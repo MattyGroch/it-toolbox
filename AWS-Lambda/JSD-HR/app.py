@@ -3,6 +3,7 @@ import os
 import json
 import requests
 import functions
+import jira
 
 app = Chalice(app_name='JSD-HR')
 # set to True if debugging

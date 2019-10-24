@@ -3,56 +3,15 @@ import ssl
 import os
 import sys
 import requests
+import jira
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from dotenv import load_dotenv
+
+
 load_dotenv()
-
-
-class JiraIssue:
-    def __init__(self, payload):
-        issue = payload['issue']
-        self.id = issue['id']
-        self.key = issue['key']
-        self.priority = issue['fields']['priority']['name']
-        self.creator_username = issue['fields']['creator']['name']
-        self.creator_displayname = issue['fields']['creator']['displayName']
-        self.reporter_username = issue['fields']['reporter']['name']
-        self.reporter_displayname = issue['fields']['reporter']['displayName']
-        self.type = issue['fields']['issuetype']['name']
-        self.project = issue['fields']['project']['key']
-        self.summary = issue['fields']['summary']
-        self.description = issue['fields']['description']
-        self.type = issue['issuetype']['name']
-
-
-class Employee:
-    def __init__(self, payload):
-        fields = payload['issue']['fields']
-        self.wage_type = fields['customfield_10161']['value']
-        self.wage_amount = fields['customfield_10162']
-        self.email = fields['customfield_10163']
-        self.phone = fields['customfield_10164']
-        self.flsa = fields['customfield_10165']['value']
-        self.address1 = fields['customfield_10150']
-        self.address2 = fields['customfield_10151']
-        self.city = fields['customfield_10152']
-        self.state = fields['customfield_10153']['value']
-        self.zip = fields['customfield_10154']
-        self.title = fields['customfield_10167']
-        self.department = fields['customfield_10149']['value']
-        self.firstname = fields['customfield_10142']
-        self.lastname = fields['customfield_10143']
-        self.preferredname = fields['customfield_10144']
-        self.pronouns = fields['customfield_10170']
-        self.manager = fields['customfield_10145']['displayName']
-        self.manager_username = fields['customfield_10145']['name']
-        self.manager_email = self.manager_username + "@snapsheet.me"
-        self.location = fields['customfield_10146']['value']
-        self.cell_reimburse = fields['customfield_10168']['value']
-        self.internet_reimburse = fields['customfield_10169']['value']
 
 
 def generate_email(template, employee):
@@ -102,14 +61,6 @@ Let me know if you have any questions and I look forward to hearing from you!
 Best,
 Snapsheet HR"""
         return message
-    elif template == "it":
-        message = """Subject: Hi there
-
-This message is for IT."""
-        return message
-    else:
-        print("Template failed to generate.")
-        sys.exit(1)
 
 
 def send_email(toaddress, message):
@@ -127,12 +78,14 @@ def send_email(toaddress, message):
 
 def onboard_user(issue, employee):
     try:
-        send_email("@cognos.com", generate_email("payroll", employee))
+        send_email("matt.grochocinski@snapsheet.me", generate_email("payroll", employee))
         add_jira_comment(issue.id, "Cognos email sent.")
     except:
-        add_jira_comment(issue.id, "Cognos email failed to send.")
+        add_jira_comment(issue.id, "Cognos email failed to send. Please send manually.")
     try:
         create_jira_issue("SDESK", employee)
+    except:
+        add_jira_comment(issue.id, "Failed to notify IT. Please let IT know manually.")
 
 
 def change_user(issue, employee):
@@ -205,8 +158,13 @@ def create_jira_issue(projectKey, employee):
        {
           "key": projectKey
        },
-       "summary": f"New Hire: {employee.firstname} {employee.lastname}",
-       "description": f"""Manager: {employee.manager}
+       "summary": f"New Hire: {employee.preferredname} {employee.lastname}",
+       "description": f"""
+       Title: {employee.title}
+       Department: {employee.department}
+       Manager: {employee.manager}
+
+       Work Location: {employee.location}       
        """,
        "issuetype": {
           "name": "Service Request"

@@ -3,6 +3,7 @@ import ssl
 import os
 import sys
 import requests
+import json
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
@@ -136,13 +137,7 @@ def create_jira_issue(employee):
     "requestTypeId": "32",
     "requestFieldValues": {
         "summary": f"New Hire: {employee.preferredname} {employee.lastname}",
-        "description": f"""
-        Title: {employee.title}
-        Department: {employee.department}
-        Manager: {employee.manager}
-
-        Work Location: {employee.location}
-        """
+        "description": f"Title: {employee.title}"
     },
     "requestParticipants": [
         "chris.garzon"
@@ -152,8 +147,8 @@ def create_jira_issue(employee):
 
     response = requests.post(
        url,
-       payload,
-       headers
+       data=payload,
+       headers=headers
     )
 
 
@@ -170,18 +165,18 @@ def testissue():
         "requestTypeId": "32",
         "requestFieldValues": {
             "summary": "New Hire: Yaboi Chris",
-            "description": "Get him up in herec"
+            "description": "Get him up in here!"
         },
         "requestParticipants": [
-            "jose.giron"
+            "chris.garzon"
         ]
     }
 )
 
     response = requests.post(
            url,
-           payload,
-           headers
+           data=payload,
+           headers=headers
         )
 
 # def jira_parser(request):

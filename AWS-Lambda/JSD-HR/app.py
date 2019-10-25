@@ -1,6 +1,5 @@
 from chalice import Chalice
 import os
-import json
 import requests
 import functions as fn
 from jira import Issue, Employee

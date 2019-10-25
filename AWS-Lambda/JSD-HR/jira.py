@@ -12,7 +12,7 @@ class Issue:
         self.project = issue['fields']['project']['key']
         self.summary = issue['fields']['summary']
         self.description = issue['fields']['description']
-        self.type = issue['issuetype']['name']
+        self.type = issue['fields']['issuetype']['name']
 
 
 class Employee:

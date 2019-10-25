@@ -19,8 +19,10 @@ def index():
         print("New Hire ticket processing.")
         try:
             fn.onboard_user(issue, employee)
+            print("New Hire ticket processed.")
             return {'status': "Onboarding success."}
         except:
+            print("New Hire ticket failed to process.")
             return {'status': "An error ocurred with onboarding."}
     elif issue.type == "Termination":
         print("Termination ticket processing.")

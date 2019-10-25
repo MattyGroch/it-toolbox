@@ -38,7 +38,7 @@ We are excited to have you on the team!
 See you soon!"""
         return message
     elif template == "payroll":
-        message = """Subject: Hi there
+        message = f"""Subject: Hi there, {employee.preferredname}!
 
 This is an email.
 
@@ -77,16 +77,13 @@ def send_email(toaddress, message):
 
 
 def onboard_user(issue, employee):
-    try:
-        send_email("matt.grochocinski@snapsheet.me", generate_email("payroll", employee))
-        add_jirasd_comment(issue.id, "Cognos email sent.")
-    except:
-        add_jirasd_comment(issue.id, "Cognos email failed to send. Please send manually.")
-    try:
-        create_jira_issue("SDESK", employee)
-        add_jirasd_comment(issue.id, "IT ticket created.")
-    except:
-        add_jirasd_comment(issue.id, "Failed to notify IT. Please let IT know manually.")
+    send_email("matt.grochocinski@snapsheet.me", generate_email("payroll", employee))
+    print("Cognos email sent.")
+    add_jirasd_comment(issue.id, "Cognos email sent.")
+
+    create_SDESK_issue(employee)
+    print("SDESK ticket made.")
+    add_jirasd_comment(issue.id, "IT ticket created.")
 
 
 def change_user(issue, employee):
@@ -115,16 +112,21 @@ def add_jirasd_comment(issueId, commentBody):
       "public": false,
       "body":  commentBody
     } )
+    print("Jira Comment:")
+    print(url)
+    print(json.dumps(headers, indent=4))
     response = requests.post(
        url,
        data=payload,
        headers=headers
     )
 
+    return response
+
     print(json.dumps(json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")))
 
 
-def create_jira_issue(employee):
+def create_SDESK_issue(employee):
     url = os.getenv("ATLASSIAN_URL") + "/rest/servicedeskapi/request"
     auth = "Basic " + os.getenv("JIRA_API_AUTH")
     headers = {
@@ -144,12 +146,17 @@ def create_jira_issue(employee):
     ]
 }
 )
+    print("Jira Issue:")
+    print(url)
+    print(json.dumps(headers, indent=4))
 
     response = requests.post(
        url,
        data=payload,
        headers=headers
     )
+
+    return response
 
 
 def testissue():

@@ -78,14 +78,14 @@ def send_email(toaddress, message):
 def onboard_user(issue, employee):
     try:
         send_email("matt.grochocinski@snapsheet.me", generate_email("payroll", employee))
-        add_jira_comment(issue.id, "Cognos email sent.")
+        add_jirasd_comment(issue.id, "Cognos email sent.")
     except:
-        add_jira_comment(issue.id, "Cognos email failed to send. Please send manually.")
+        add_jirasd_comment(issue.id, "Cognos email failed to send. Please send manually.")
     try:
         create_jira_issue("SDESK", employee)
-        add_jira_comment(issue.id, "IT ticket created.")
+        add_jirasd_comment(issue.id, "IT ticket created.")
     except:
-        add_jira_comment(issue.id, "Failed to notify IT. Please let IT know manually.")
+        add_jirasd_comment(issue.id, "Failed to notify IT. Please let IT know manually.")
 
 
 def change_user(issue, employee):
@@ -102,37 +102,19 @@ def terminate_user(issue, employee):
         return {'status': "An error ocurred."}
 
 
-def add_jira_comment(issueId, commentBody):
-    url = os.getenv("ATLASSIAN_URL") + "/rest/api/3/issue/" + issueId + "/comment"
-    auth = "Bearer " + os.getenv("JIRA_API_AUTH")
+def add_jirasd_comment(issueId, commentBody):
+    url = os.getenv("ATLASSIAN_URL") + "/rest/servicedeskapi/request/" + issueId + "/comment"
+    auth = "Basic " + os.getenv("JIRA_API_AUTH")
     headers = {
        "Accept": "application/json",
        "Content-Type": "application/json",
        "Authorization": auth
     }
     payload = json.dumps( {
-      "visibility": {
-        "type": "role",
-        "value": "Administrators"
-      },
-      "body": {
-        "type": "doc",
-        "version": 1,
-        "content": [
-          {
-            "type": "paragraph",
-            "content": [
-              {
-                "text": comment_body,
-                "type": "text"
-              }
-            ]
-          }
-        ]
-      }
+      "public": false,
+      "body":  commentBody
     } )
-    response = requests.request(
-       "POST",
+    response = requests.post(
        url,
        data=payload,
        headers=headers
@@ -141,41 +123,67 @@ def add_jira_comment(issueId, commentBody):
     print(json.dumps(json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")))
 
 
-def create_jira_issue(projectKey, employee):
-    url = os.getenv("ATLASSIAN_URL") + "/rest/api/2/issue"
-
-    auth = "Bearer " + os.getenv("JIRA_API_AUTH")
-
+def create_jira_issue(employee):
+    url = os.getenv("ATLASSIAN_URL") + "/rest/servicedeskapi/request"
+    auth = "Basic " + os.getenv("JIRA_API_AUTH")
     headers = {
        "Accept": "application/json",
        "Content-Type": "application/json",
        "Authorization": auth
     }
-
     payload = json.dumps( {
-    "fields": {
-       "project":
-       {
-          "key": projectKey
-       },
-       "summary": f"New Hire: {employee.preferredname} {employee.lastname}",
-       "description": f"""
-       Title: {employee.title}
-       Department: {employee.department}
-       Manager: {employee.manager}
+    "serviceDeskId": "3",
+    "requestTypeId": "32",
+    "requestFieldValues": {
+        "summary": f"New Hire: {employee.preferredname} {employee.lastname}",
+        "description": f"""
+        Title: {employee.title}
+        Department: {employee.department}
+        Manager: {employee.manager}
 
-       Work Location: {employee.location}
-       """
-       }
-   }
+        Work Location: {employee.location}
+        """
+    },
+    "requestParticipants": [
+        "chris.garzon"
+    ]
+}
 )
 
-    response = requests.request(
-       "POST",
+    response = requests.post(
        url,
-       data=payload,
-       headers=headers
+       payload,
+       headers
     )
+
+
+def testissue():
+    url = os.getenv("ATLASSIAN_URL") + "/rest/servicedeskapi/request"
+    auth = "Basic " + os.getenv("JIRA_API_AUTH")
+    headers = {
+       "Accept": "application/json",
+       "Content-Type": "application/json",
+       "Authorization": auth
+    }
+    payload = json.dumps( {
+        "serviceDeskId": "3",
+        "requestTypeId": "32",
+        "requestFieldValues": {
+            "summary": "New Hire: Yaboi Chris",
+            "description": "Get him up in herec"
+        },
+        "requestParticipants": [
+            "jose.giron"
+        ]
+    }
+)
+
+    response = requests.post(
+           url,
+           payload,
+           headers
+        )
+
 # def jira_parser(request):
 #     try:
 #     # parse request payload data

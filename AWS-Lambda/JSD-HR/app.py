@@ -17,22 +17,26 @@ def index():
     employee = Employee(payload)
 
     if issue.type == "New Hire":
+        print("New Hire ticket processing.")
         try:
             fn.onboard_user(issue, employee)
             return {'status': "Onboarding success."}
         except:
             return {'status': "An error ocurred with onboarding."}
     elif issue.type == "Termination":
+        print("Termination ticket processing.")
         try:
             fn.terminate_user(issue, employee)
             return {'status': "Termination success."}
         except:
             return {'status': "An error ocurred with termination."}
     elif issue.type == "Change":
+        print("Change ticket processing.")
         try:
             fn.change_user(issue, employee)
             return {'status': "Information change success."}
         except:
             return {'status': "An error ocurred with information change."}
     else:
+        print("All conditions failed. No ticket processing.")
         return {'status': "Unknown issue type."}

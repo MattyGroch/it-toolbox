@@ -19,7 +19,7 @@ def index():
     if issue.type == "New Hire":
         try:
             fn.onboard_user(issue, employee)
-            return {'status': "Onboarding succe$ss."}
+            return {'status': "Onboarding success."}
         except:
             return {'status': "An error ocurred with onboarding."}
     elif issue.type == "Termination":

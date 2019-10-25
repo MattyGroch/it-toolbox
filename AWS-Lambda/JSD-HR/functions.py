@@ -3,7 +3,6 @@ import ssl
 import os
 import sys
 import requests
-import jira
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
@@ -77,13 +76,14 @@ def send_email(toaddress, message):
 
 
 def onboard_user(issue, employee):
-    # try:
-    #     send_email("matt.grochocinski@snapsheet.me", generate_email("payroll", employee))
-    #     add_jira_comment(issue.id, "Cognos email sent.")
-    # except:
-    #     add_jira_comment(issue.id, "Cognos email failed to send. Please send manually.")
+    try:
+        send_email("matt.grochocinski@snapsheet.me", generate_email("payroll", employee))
+        add_jira_comment(issue.id, "Cognos email sent.")
+    except:
+        add_jira_comment(issue.id, "Cognos email failed to send. Please send manually.")
     try:
         create_jira_issue("SDESK", employee)
+        add_jira_comment(issue.id, "IT ticket created.")
     except:
         add_jira_comment(issue.id, "Failed to notify IT. Please let IT know manually.")
 
@@ -165,12 +165,10 @@ def create_jira_issue(projectKey, employee):
        Manager: {employee.manager}
 
        Work Location: {employee.location}
-       """,
-       "issuetype": {
-          "name": "Service Request"
+       """
        }
    }
-} )
+)
 
     response = requests.request(
        "POST",

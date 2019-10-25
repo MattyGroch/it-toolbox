@@ -22,6 +22,7 @@ def index():
             print("New Hire ticket processed.")
             return {'status': "Onboarding success."}
         except:
+            fn.add_jirasd_comment(issue.key,"The onboarding automation failed! Please reach out to IT.")
             print("New Hire ticket failed to process.")
             return {'status': "An error ocurred with onboarding."}
     elif issue.type == "Termination":

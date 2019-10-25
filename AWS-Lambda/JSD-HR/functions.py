@@ -79,11 +79,11 @@ def send_email(toaddress, message):
 def onboard_user(issue, employee):
     send_email("matt.grochocinski@snapsheet.me", generate_email("payroll", employee))
     print("Cognos email sent.")
-    add_jirasd_comment(issue.id, "Cognos email sent.")
-
+    add_jirasd_comment(issue.key, "Cognos email sent.")
+    print("Comment added.")
     create_SDESK_issue(employee)
     print("SDESK ticket made.")
-    add_jirasd_comment(issue.id, "IT ticket created.")
+    add_jirasd_comment(issue.key, "IT ticket created.")
 
 
 def change_user(issue, employee):
@@ -100,30 +100,27 @@ def terminate_user(issue, employee):
         return {'status': "An error ocurred."}
 
 
-def add_jirasd_comment(issueId, commentBody):
-    url = os.getenv("ATLASSIAN_URL") + "/rest/servicedeskapi/request/" + issueId + "/comment"
+def add_jirasd_comment(issueKey, commentBody):
+    url = os.getenv("ATLASSIAN_URL") + "/rest/servicedeskapi/request/" + issueKey + "/comment"
     auth = "Basic " + os.getenv("JIRA_API_AUTH")
     headers = {
        "Accept": "application/json",
        "Content-Type": "application/json",
        "Authorization": auth
     }
-    payload = json.dumps( {
-      "public": false,
-      "body":  commentBody
-    } )
-    print("Jira Comment:")
-    print(url)
-    print(json.dumps(headers, indent=4))
+    body = json.dumps( {
+      "public": "false",
+      "body": commentBody
+    }
+)
+
     response = requests.post(
        url,
-       data=payload,
+       data=body,
        headers=headers
     )
 
     return response
-
-    print(json.dumps(json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")))
 
 
 def create_SDESK_issue(employee):
@@ -135,29 +132,26 @@ def create_SDESK_issue(employee):
        "Authorization": auth
     }
     payload = json.dumps( {
-    "serviceDeskId": "3",
-    "requestTypeId": "32",
-    "requestFieldValues": {
-        "summary": f"New Hire: {employee.preferredname} {employee.lastname}",
-        "description": f"Title: {employee.title}"
-    },
-    "requestParticipants": [
-        "chris.garzon"
-    ]
-}
+        "serviceDeskId": "3",
+        "requestTypeId": "32",
+        "requestFieldValues": {
+            "summary": f"New Hire: {employee.preferredname} {employee.lastname}",
+            "description": f"Title: {employee.title}"
+        },
+        "requestParticipants": [
+            "chris.garzon"
+        ]
+    }
 )
-    print("Jira Issue:")
-    print(url)
-    print(json.dumps(headers, indent=4))
 
-    response = requests.post(
+    requests.post(
        url,
        data=payload,
        headers=headers
     )
 
     return response
-
+    print(json.dumps(json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")))
 
 def testissue():
     url = os.getenv("ATLASSIAN_URL") + "/rest/servicedeskapi/request"
@@ -185,37 +179,3 @@ def testissue():
            data=payload,
            headers=headers
         )
-
-# def jira_parser(request):
-#     try:
-#     # parse request payload data
-#         issue_id = request['issue']['id']
-#         issue_key = request['issue']['key']
-#     # parse issue fields
-#         issue_priority = request['issue']['fields']['priority']['name']
-#         issue_creator_username = request['issue']['fields']['creator']['name']
-#         issue_creator_displayname = request['issue']['fields']['creator']['displayName']
-#         issue_reporter_username = request['issue']['fields']['reporter']['name']
-#         issue_reporter_displayname = request['issue']['fields']['reporter']['displayName']
-#         issue_type = request['issue']['fields']['issuetype']['name']
-#         issue_project = request['issue']['fields']['project']['key']
-#         issue_summary = request['issue']['fields']['summary']
-#         issue_description = request['issue']['fields']['description']
-#     except:
-#         return "Error with Jira ticket info."
-#
-#     jira_dict = {
-#         'id': issue_id,
-#         'key': issue_key,
-#         'priority': issue_priority,
-#         'createdby_user': issue_creator_username,
-#         'createdby_dispname': issue_creator_displayname,
-#         'reporter_user': issue_reporter_username,
-#         'reporter_dispname': issue_reporter_displayname,
-#         'type': issue_type,
-#         'project': issue_project,
-#         'summary': issue_summary,
-#         'description': issue_description
-#     }
-#
-#     return jira_dict

@@ -77,11 +77,11 @@ def send_email(toaddress, message):
 
 
 def onboard_user(issue, employee):
-    try:
-        send_email("matt.grochocinski@snapsheet.me", generate_email("payroll", employee))
-        add_jira_comment(issue.id, "Cognos email sent.")
-    except:
-        add_jira_comment(issue.id, "Cognos email failed to send. Please send manually.")
+    # try:
+    #     send_email("matt.grochocinski@snapsheet.me", generate_email("payroll", employee))
+    #     add_jira_comment(issue.id, "Cognos email sent.")
+    # except:
+    #     add_jira_comment(issue.id, "Cognos email failed to send. Please send manually.")
     try:
         create_jira_issue("SDESK", employee)
     except:
@@ -164,7 +164,7 @@ def create_jira_issue(projectKey, employee):
        Department: {employee.department}
        Manager: {employee.manager}
 
-       Work Location: {employee.location}       
+       Work Location: {employee.location}
        """,
        "issuetype": {
           "name": "Service Request"

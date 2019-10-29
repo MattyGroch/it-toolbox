@@ -4,6 +4,7 @@ import os
 import sys
 import requests
 import json
+import base64
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
@@ -101,8 +102,8 @@ def terminate_user(issue, employee):
 
 
 def add_jirasd_comment(issueKey, commentBody):
-    url = os.getenv("ATLASSIAN_URL") + "/rest/servicedeskapi/request/" + issueKey + "/comment"
-    auth = "Basic " + os.getenv("JIRA_API_AUTH")
+    url = jira_url() + "/rest/servicedeskapi/request/" + issueKey + "/comment"
+    auth = jira_auth()
     headers = {
        "Accept": "application/json",
        "Content-Type": "application/json",
@@ -123,9 +124,23 @@ def add_jirasd_comment(issueKey, commentBody):
     return response
 
 
+def jira_auth():
+    user = os.getenv("JIRA_ACCT")
+    key = os.getenv("JIRA_API_KEY")
+    encode = base64.b64encode(acct + ":" key)
+    auth = "Basic " + encode
+    return auth
+
+
+def jira_url():
+    domain = os.getenv("JIRA_DOMAIN")
+    url = "https://" + domain + ".atlassian.net"
+    return url
+
+
 def create_SDESK_issue(employee):
-    url = os.getenv("ATLASSIAN_URL") + "/rest/servicedeskapi/request"
-    auth = "Basic " + os.getenv("JIRA_API_AUTH")
+    url = jira_url() + "/rest/servicedeskapi/request"
+    auth = jira_auth()
     headers = {
        "Accept": "application/json",
        "Content-Type": "application/json",
@@ -154,8 +169,8 @@ def create_SDESK_issue(employee):
     print(json.dumps(json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")))
 
 def testissue():
-    url = os.getenv("ATLASSIAN_URL") + "/rest/servicedeskapi/request"
-    auth = "Basic " + os.getenv("JIRA_API_AUTH")
+    url = jira_url() + "/rest/servicedeskapi/request"
+    auth = jira_auth()
     headers = {
        "Accept": "application/json",
        "Content-Type": "application/json",

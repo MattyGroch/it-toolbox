@@ -15,56 +15,89 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def generate_email(template, employee):
-    if template == "employee":
-        message = f"""Subject: Welcome to Snapsheet, {employee.preferredname}!
+def send_email(category, e, attachments):
+    # Define required variables
+    toaddr = {
+        "Cognos": "payroll@cognoshr.com,gkraft@cognoshr.com,adunleavy@cognoshr.com",
+        "Manager": e.manager_email,
+        "New Hire": e.email,
+        "Test": "matt.grochocinski@snapsheet.me,jose.giron@snapsheet.me"
+    }
 
-Hi {employee.preferredname},
+    subj = {
+        "Cognos": f"Snapsheet New Hire - {e.firstname} {e.lastname}",
+        "Manager": f"{e.department} New Hire - {e.firstname} {e.lastname}",
+        "New Hire": f"Hey {e.preferredname}! Welcome to Snapsheet!",
+        "Test": f"Test HR Email: {e.preferredname} {e.lastname}"
+    }
 
-We are so happy to have you joining us! Please arrive to the office at 1 N. Dearborn at 9:00am on your start date. Our Office Manager will greet you upon arrival to the 6th floor.
+    body = {
+        "Cognos": f"""Hi Ann and Gina,
 
+            Please see the information below as well as the attached offer letter for a new hire:
+            a. Full Name: {e.firstname} {e.lastname}
+            b. Personal Email: {e.email}
+            c. Title: {e.title}
+            d. Location: {e.location}
+            e. Department: {e.department}
+            f. Start Date: {e.start_date}
+            g. Pay (salary/hourly): {e.wage_amount} ({e.wage_type})
+            h. Exemption Status: {e.flsa}
+            Let us know if there is any other information you need!""",
+        "Manager": f"""Hello {e.manager},
 
-New Hire Paperwork:
-You will receive an email from Gina Kraft with a link to PrismHR. Please complete the onboarding documents.
+            To ensure that IT and HR can facilitate your new hire's desk setup, please provide the following information in regards to {e.preferredname} {e.lastname} starting on {e.start_date} at 10am.
+            ● Where would you like your New Hire to sit?
+            ● Does your New Hire need any special equipment from IT?
+            ● Will your New Hire need a corporate card/travel?
 
-Benefits:
-Please complete the benefits enrollment section of the onboarding site. You MUST have this completed by the end of your first week. If you have any questions, feel free to contact us at carly.stieve@snapsheet.me
+            We've attached the New Hire Checklist and 30/60/90 in case you'd like to use the
+            templates to set up seating, goals, lunches, etc. Let us know if you have any questions.
+            We look forward to your reply soon.
 
-Forms to bring the first day:
-We are required by federal regulations to verify your employment eligibility. Bring supporting documentation for your I-9, in original form. Please refer to the I-9 section of the onboarding site to see a list acceptable documents.
+            Best,
+            Snapsheet HR Team""",
+        "New Hire": f"""Hi {e.preferredname},
 
+            We are so happy to have you join us next week! Please arrive to the office at 1 N.
+            Dearborn on May 13th at 10:00 AM . Our Office Manager, Steven Stojak will greet you
+            upon arrival to the 6th floor.
 
-We are excited to have you on the team!
+            New Hire Paperwork:
+            You will receive an email from Gina Kraft with a link to PrismHR. Please complete the
+            onboarding documents prior to your first day.
 
-See you soon!"""
-        return message
-    elif template == "payroll":
-        message = f"""Subject: Hi there, {employee.preferredname}!
+            Benefits:
+            Please complete the benefits enrollment section of the onboarding site. You MUST have
+            this completed by the end of your first week. If you have any questions, feel free to
+            contact me at dominique.oconnor@snapsheet.me
 
-This is an email.
+            Forms and Identification to bring the first day:
+            We are required by federal regulations to verify your employment eligibility. Bring
+            supporting documentation for your I-9, in original form. Please refer to the I-9 section of
+            the onboarding site to see a list of acceptable documents.
 
-Best,
-Snapsheet HR"""
-        return message
-    elif template == "manager":
-        message = f"""Subject: New Hire - {employee.preferredname} {employee.lastname}
+            We are excited to have you on the team!
 
-Hi There!
+            See you soon!""",
+        "Test": "This is the body of the email."
+    }
 
-Please follow the attached New Hire Checklist as a reminder to set up seating, goals, lunches, etc. in regards to employee name and start date! Also, please provide the following information at your earliest convenience:
+    # Build the email message
+    msg = MIMEMultipart()
+    msg['From'] = fromaddr
+    msg['To'] = toaddr[category]
+    msg['Subject'] = subj[category]
+    msg.attach(MIMEText(body[category], 'plain'))
 
-    -Where would you like her to sit?
-    -Does she need any special equipment from IT?
-    -Will she need a cell phone reimbursement? As a reminder, the employee is eligible for a cell phone reimbursement if they are expected to use their personal mobile device for work-related purposes.
+    # Identify and attach filelist
+    if category == "Cognos":
+        if attachments is not None:
+            attachments = "File_name_with_extension"
+            for each a in attachments:
+                    open(a, "rb")
 
-Let me know if you have any questions and I look forward to hearing from you!
-
-Best,
-Snapsheet HR"""
-        return message
-
-
-def send_email(toaddress, message):
+    # Define sending variables
     gmail_user = os.getenv("EMAIL_ACCT")
     gmail_password = os.getenv("EMAIL_PWD")
     port = 465  # For SSL
@@ -74,15 +107,17 @@ def send_email(toaddress, message):
 
     with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
         server.login(gmail_user, gmail_password)
-        server.sendmail(gmail_user, toaddress, message)
+        server.sendmail(gmail_user, msg['To'].split(","), msg.as_string())
 
 
-def onboard_user(issue, employee):
-    send_email("matt.grochocinski@snapsheet.me", generate_email("payroll", employee))
+def onboard_user(issue, emp):
+    jira_files = download_jira_attachments(issue.key)
+    mgr_files =
+    send_email("Test", emp, files)
     print("Cognos email sent.")
     add_jirasd_comment(issue.key, "Cognos email sent.")
-    print("Comment added.")
-    create_SDESK_issue(employee)
+
+    create_SDESK_issue(emp)
     print("SDESK ticket made.")
     add_jirasd_comment(issue.key, "IT ticket created.")
 
@@ -164,9 +199,9 @@ def create_SDESK_issue(employee):
        data=payload,
        headers=headers
     )
-
-    return response
     print(json.dumps(json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")))
+    return response
+
 
 def testissue():
     url = jira_url() + "/rest/servicedeskapi/request"
@@ -194,3 +229,26 @@ def testissue():
            data=payload,
            headers=headers
         )
+
+
+def download_jira_attachments(issueKey):
+    url = "https://snapsheettech.atlassian.net/rest/servicedeskapi/request/" + issueKey + "/attachment"
+    auth = jira_auth()
+    headers = {
+       "Authorization": auth
+    }
+    filelist = list()
+    r = requests.get(jiraURL, headers=headers, stream = True)
+    c = json.loads(r.content)
+    if not c['values']:
+    	return None
+    else:
+       	for a in c['values']:
+       		filename = a['filename']
+    		file_url = a['_links']['content']
+       		z = requests.get(file_url, headers=headers, stream = True)
+       		with open(filename, "wb") as f:
+    			f.write(z.content)
+    		f.close()
+            file_list.append(filename)
+    return file_list

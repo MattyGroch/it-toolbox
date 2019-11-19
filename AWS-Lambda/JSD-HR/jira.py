@@ -1,6 +1,7 @@
 class Issue:
     def __init__(self, payload):
         issue = payload['issue']
+        fields = issue['fields']
         self.id = issue['id']
         self.key = issue['key']
         self.priority = issue['fields']['priority']['name']
@@ -13,6 +14,8 @@ class Issue:
         self.summary = issue['fields']['summary']
         self.description = issue['fields']['description']
         self.type = issue['fields']['issuetype']['name']
+        self.attachment = issue['fields']['attachment']
+        self.due_date = issue['fields']['duedate']
 
 
 class Employee:
@@ -40,3 +43,4 @@ class Employee:
         self.location = fields['customfield_10146']['value']
         self.cell_reimburse = fields['customfield_10168']['value']
         self.internet_reimburse = fields['customfield_10169']['value']
+        self.start_date = fields['duedate']

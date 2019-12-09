@@ -17,8 +17,9 @@ load_dotenv()
 
 def send_email(category, e, attachments):
     # Define required variables
+
     toaddr = {
-        "Cognos": "payroll@cognoshr.com,gkraft@cognoshr.com,adunleavy@cognoshr.com",
+        "Cognos": os.getenv("HR_SEND_EMAILS"),
         "Manager": e.manager_email,
         "New Hire": e.email,
         "Test": "matt.grochocinski@snapsheet.me,jose.giron@snapsheet.me"
@@ -94,7 +95,7 @@ def send_email(category, e, attachments):
     if category == "Cognos":
         if attachments is not None:
             attachments = "File_name_with_extension"
-            for each a in attachments:
+            for a in attachments:
                     open(a, "rb")
 
     # Define sending variables

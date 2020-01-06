@@ -1,0 +1,11 @@
+{
+  "content-length": "21620",
+  "accept": "*/*",
+  "x-atlassian-webhook-identifier": "1083811",
+  "content-type": "application/json; charset=UTF-8",
+  "user-agent": "Atlassian Webhook HTTP Client",
+  "accept-encoding": "gzip,deflate",
+  "x-b3-traceid": "fcc0410c375191ff",
+  "x-b3-spanid": "fcc0410c375191ff",
+  "x-b3-sampled": "1"
+}

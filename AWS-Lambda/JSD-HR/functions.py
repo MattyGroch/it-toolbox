@@ -113,7 +113,7 @@ def send_email(category, e, attachments):
 
 def onboard_user(issue, emp):
     jira_files = download_jira_attachments(issue.key)
-    mgr_files =
+    # mgr_files = 
     send_email("Test", emp, files)
     print("Cognos email sent.")
     add_jirasd_comment(issue.key, "Cognos email sent.")
@@ -163,7 +163,7 @@ def add_jirasd_comment(issueKey, commentBody):
 def jira_auth():
     user = os.getenv("JIRA_ACCT")
     key = os.getenv("JIRA_API_KEY")
-    encode = base64.b64encode(acct + ":" key)
+    encode = base64.b64encode(acct + ":" + key)
     auth = "Basic " + encode
     return auth
 
@@ -245,11 +245,11 @@ def download_jira_attachments(issueKey):
     	return None
     else:
        	for a in c['values']:
-       		filename = a['filename']
-    		file_url = a['_links']['content']
-       		z = requests.get(file_url, headers=headers, stream = True)
-       		with open(filename, "wb") as f:
-    			f.write(z.content)
-    		f.close()
+            filename = a['filename']
+            file_url = a['_links']['content']
+            z = requests.get(file_url, headers=headers, stream = True)
+            with open(filename, "wb") as f:
+                f.write(z.content)
+            f.close()
             file_list.append(filename)
     return file_list

@@ -15,19 +15,20 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def send_email(category, e, attachments):
+def build_email(type, e, files=None):
     # Define required variables
+    gmail_user = os.getenv("EMAIL_ACCT")
 
     toaddr = {
         "Cognos": os.getenv("HR_SEND_EMAILS"),
         "Manager": e.manager_email,
         "New Hire": e.email,
-        "Test": "matt.grochocinski@snapsheet.me,jose.giron@snapsheet.me"
+        "Test": "matt.grochocinski@snapsheet.me"
     }
 
     subj = {
         "Cognos": f"Snapsheet New Hire - {e.firstname} {e.lastname}",
-        "Manager": f"{e.department} New Hire - {e.firstname} {e.lastname}",
+        "Manager": f"{e.department} New Hire - {e.preferredname} {e.lastname}",
         "New Hire": f"Hey {e.preferredname}! Welcome to Snapsheet!",
         "Test": f"Test HR Email: {e.preferredname} {e.lastname}"
     }
@@ -35,106 +36,81 @@ def send_email(category, e, attachments):
     body = {
         "Cognos": f"""Hi Ann and Gina,
 
-            Please see the information below as well as the attached offer letter for a new hire:
-            a. Full Name: {e.firstname} {e.lastname}
-            b. Personal Email: {e.email}
-            c. Title: {e.title}
-            d. Location: {e.location}
-            e. Department: {e.department}
-            f. Start Date: {e.start_date}
-            g. Pay (salary/hourly): {e.wage_amount} ({e.wage_type})
-            h. Exemption Status: {e.flsa}
-            Let us know if there is any other information you need!""",
-        "Manager": f"""Hello {e.manager},
+Please see the information below as well as the attached offer letter for a new hire:
+    a. Full Name: {e.firstname} {e.lastname}
+    b. Personal Email: {e.email}
+    c. Title: {e.title}
+    d. Location: {e.location}
+    e. Department: {e.department}
+    f. Start Date: {e.start_date}
+    g. Pay (salary/hourly): {e.wage_amount} ({e.wage_type})
+    h. Exemption Status: {e.flsa}
+Let us know if there is any other information you need!""",
+        "Manager": f"""Hi {e.manager},
 
-            To ensure that IT and HR can facilitate your new hire's desk setup, please provide the following information in regards to {e.preferredname} {e.lastname} starting on {e.start_date} at 10am.
-            ● Where would you like your New Hire to sit?
-            ● Does your New Hire need any special equipment from IT?
-            ● Will your New Hire need a corporate card/travel?
+To ensure that IT and HR can facilitate your new hire's desk setup, please provide the following information in regards to {e.preferredname} {e.lastname} starting on {e.start_date} at 10am.
+● Where would you like your New Hire to sit?
+● Does your New Hire need any special equipment from IT?
+● Will your New Hire need a corporate card/travel?
 
-            We've attached the New Hire Checklist and 30/60/90 in case you'd like to use the
-            templates to set up seating, goals, lunches, etc. Let us know if you have any questions.
-            We look forward to your reply soon.
+We've attached the New Hire Checklist and 30/60/90 in case you'd like to use the
+templates to set up seating, goals, lunches, etc. Let us know if you have any questions.
+We look forward to your reply soon.
 
-            Best,
-            Snapsheet HR Team""",
+Best,
+Snapsheet HR Team""",
         "New Hire": f"""Hi {e.preferredname},
 
-            We are so happy to have you join us next week! Please arrive to the office at 1 N.
-            Dearborn on May 13th at 10:00 AM . Our Office Manager, Steven Stojak will greet you
-            upon arrival to the 6th floor.
+We are so happy to have you join us next week! Please arrive to the office at 1 N.
+Dearborn on {e.start_date} at 10:00 AM. Our Office Manager, Steven Stojak will greet you
+upon arrival to the 6th floor.
 
-            New Hire Paperwork:
-            You will receive an email from Gina Kraft with a link to PrismHR. Please complete the
-            onboarding documents prior to your first day.
+New Hire Paperwork:
+You will receive an email from Gina Kraft with a link to PrismHR. Please complete the
+onboarding documents prior to your first day.
 
-            Benefits:
-            Please complete the benefits enrollment section of the onboarding site. You MUST have
-            this completed by the end of your first week. If you have any questions, feel free to
-            contact me at dominique.oconnor@snapsheet.me
+Benefits:
+Please complete the benefits enrollment section of the onboarding site. You MUST have
+this completed by the end of your first week. If you have any questions, feel free to
+contact me at dominique.oconnor@snapsheet.me
 
-            Forms and Identification to bring the first day:
-            We are required by federal regulations to verify your employment eligibility. Bring
-            supporting documentation for your I-9, in original form. Please refer to the I-9 section of
-            the onboarding site to see a list of acceptable documents.
+Forms and Identification to bring the first day:
+We are required by federal regulations to verify your employment eligibility. Bring
+supporting documentation for your I-9, in original form. Please refer to the I-9 section of
+the onboarding site to see a list of acceptable documents.
 
-            We are excited to have you on the team!
+We are excited to have you on the team!
 
-            See you soon!""",
+See you soon!""",
         "Test": "This is the body of the email."
     }
 
     # Build the email message
     msg = MIMEMultipart()
-    msg['From'] = fromaddr
-    msg['To'] = toaddr[category]
-    msg['Subject'] = subj[category]
-    msg.attach(MIMEText(body[category], 'plain'))
+    msg['From'] = gmail_user
+    msg['To'] = toaddr[type]
+    msg['Subject'] = subj[type]
+    msg.attach(MIMEText(body[type], 'plain'))
 
     # Identify and attach filelist
-    if category == "Cognos":
-        if attachments is not None:
-            attachments = "File_name_with_extension"
-            for a in attachments:
-                    open(a, "rb")
+	if files != None:
+		for f in files:
+			part = MIMEBase('application', "octet-stream")
+			part.set_payload( open("/tmp/" + f,"rb").read() )
+			encoders.encode_base64(part)
+			part.add_header('Content-Disposition', 'attachment; filename="%s"' % os.path.basename(f))
+			msg.attach(part)
+	return msg
 
+def send_email(msg):
     # Define sending variables
     gmail_user = os.getenv("EMAIL_ACCT")
     gmail_password = os.getenv("EMAIL_PWD")
-    port = 465  # For SSL
 
-    # Create a secure SSL context
-    context = ssl.create_default_context()
-
-    with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(gmail_user, gmail_password)
         server.sendmail(gmail_user, msg['To'].split(","), msg.as_string())
-
-
-def onboard_user(issue, emp):
-    jira_files = download_jira_attachments(issue.key)
-    # mgr_files = 
-    send_email("Test", emp, files)
-    print("Cognos email sent.")
-    add_jirasd_comment(issue.key, "Cognos email sent.")
-
-    create_SDESK_issue(emp)
-    print("SDESK ticket made.")
-    add_jirasd_comment(issue.key, "IT ticket created.")
-
-
-def change_user(issue, employee):
-    try:
-        return {'status': "Success."}
-    except:
-        return {'status': "An error ocurred."}
-
-
-def terminate_user(issue, employee):
-    try:
-        return {'status': "Success."}
-    except:
-        return {'status': "An error ocurred."}
+        server.quit()
 
 
 def add_jirasd_comment(issueKey, commentBody):
@@ -163,7 +139,7 @@ def add_jirasd_comment(issueKey, commentBody):
 def jira_auth():
     user = os.getenv("JIRA_ACCT")
     key = os.getenv("JIRA_API_KEY")
-    encode = base64.b64encode(acct + ":" + key)
+    encode = base64.b64encode(user + ":" + key)
     auth = "Basic " + encode
     return auth
 
@@ -187,69 +163,76 @@ def create_SDESK_issue(employee):
         "requestTypeId": "32",
         "requestFieldValues": {
             "summary": f"New Hire: {employee.preferredname} {employee.lastname}",
-            "description": f"Title: {employee.title}"
+            "description": f"""Title: {employee.title}
+Department: {employee.department}
+Manager: {employee.manager}""",
+            "customfield10076": f"{employee.start_date}"
         },
         "requestParticipants": [
-            "chris.garzon"
-        ]
-    }
-)
-
-    requests.post(
-       url,
-       data=payload,
-       headers=headers
-    )
-    print(json.dumps(json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")))
-    return response
-
-
-def testissue():
-    url = jira_url() + "/rest/servicedeskapi/request"
-    auth = jira_auth()
-    headers = {
-       "Accept": "application/json",
-       "Content-Type": "application/json",
-       "Authorization": auth
-    }
-    payload = json.dumps( {
-        "serviceDeskId": "3",
-        "requestTypeId": "32",
-        "requestFieldValues": {
-            "summary": "New Hire: Yaboi Chris",
-            "description": "Get him up in here!"
-        },
-        "requestParticipants": [
-            "chris.garzon"
+            "chris.garzon",
+            "jose.giron"
         ]
     }
 )
 
     response = requests.post(
-           url,
-           data=payload,
-           headers=headers
-        )
+       url,
+       data=payload,
+       headers=headers
+    )
+
+    newIssue = json.loads(response.text)['issueKey']
+
+    return newIssue
 
 
 def download_jira_attachments(issueKey):
-    url = "https://snapsheettech.atlassian.net/rest/servicedeskapi/request/" + issueKey + "/attachment"
-    auth = jira_auth()
-    headers = {
-       "Authorization": auth
-    }
-    filelist = list()
-    r = requests.get(jiraURL, headers=headers, stream = True)
-    c = json.loads(r.content)
-    if not c['values']:
-    	return None
-    else:
-       	for a in c['values']:
-            filename = a['filename']
-            file_url = a['_links']['content']
-            z = requests.get(file_url, headers=headers, stream = True)
-            with open(filename, "wb") as f:
-                f.write(z.content)
-            f.close()
-            file_list.append(filename)
-    return file_list
+	baseurl = jira_url()
+	url = baseurl + "/rest/servicedeskapi/request/" + issueKey + "/attachment"
+	auth = jira_auth()
+	headers = {
+		"Authorization": auth
+	}
+	filelist = list()
+	r = requests.get(url, headers = headers, stream = True)
+	c = json.loads(r.content)
+	if not c['values']:
+		return None
+	else:
+		for a in c['values']:
+			filename = a['filename']
+			file_url = a['_links']['content']
+			z = requests.get(file_url, headers = headers, stream = True)
+			with open("tmp/" + filename, "wb") as f:
+				f.write(z.content)
+			f.close()
+			filelist.append(filename)
+	return filelist
+
+
+def onboard_user(issue, emp):
+    try:
+        send_email(build_email("Test", emp, download_jira_attachments(issue.key)))
+        add_jirasd_comment(issue.key, "Test email sent.")
+    except:
+        add_jirasd_comment(issue.key, "Email failed to send to Cognos.")
+
+    try:
+        sdesk-issue = create_SDESK_issue(emp)
+        add_jirasd_comment(issue.key, "IT ticket created: " + sdesk-issue)
+    except:
+        add_jirasd_comment(issue.key, "Failed to alert IT.")
+
+
+def change_user(issue, employee):
+    try:
+        return {'status': "Success."}
+    except:
+        return {'status': "An error ocurred."}
+
+
+def terminate_user(issue, employee):
+    try:
+        return {'status': "Success."}
+    except:
+        return {'status': "An error ocurred."}

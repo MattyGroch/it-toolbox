@@ -5,6 +5,7 @@ import sys
 import requests
 import json
 import base64
+from basicauth import encode
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
@@ -93,14 +94,14 @@ See you soon!""",
     msg.attach(MIMEText(body[type], 'plain'))
 
     # Identify and attach filelist
-	if files != None:
-		for f in files:
-			part = MIMEBase('application', "octet-stream")
-			part.set_payload( open("/tmp/" + f,"rb").read() )
-			encoders.encode_base64(part)
-			part.add_header('Content-Disposition', 'attachment; filename="%s"' % os.path.basename(f))
-			msg.attach(part)
-	return msg
+    if files != None:
+        for f in files:
+            part = MIMEBase('application', "octet-stream")
+            part.set_payload( open("/tmp/" + f,"rb").read() )
+            encoders.encode_base64(part)
+            part.add_header('Content-Disposition', 'attachment; filename="%s"' % os.path.basename(f))
+            msg.attach(part)
+    return msg
 
 def send_email(msg):
     # Define sending variables
@@ -139,9 +140,8 @@ def add_jirasd_comment(issueKey, commentBody):
 def jira_auth():
     user = os.getenv("JIRA_ACCT")
     key = os.getenv("JIRA_API_KEY")
-    encode = base64.b64encode(user + ":" + key)
-    auth = "Basic " + encode
-    return auth
+    encoded_str = encode(user, key)
+    return encoded_str
 
 
 def jira_url():
@@ -187,41 +187,57 @@ Manager: {employee.manager}""",
 
 
 def download_jira_attachments(issueKey):
-	baseurl = jira_url()
-	url = baseurl + "/rest/servicedeskapi/request/" + issueKey + "/attachment"
-	auth = jira_auth()
-	headers = {
-		"Authorization": auth
-	}
-	filelist = list()
-	r = requests.get(url, headers = headers, stream = True)
-	c = json.loads(r.content)
-	if not c['values']:
-		return None
-	else:
-		for a in c['values']:
-			filename = a['filename']
-			file_url = a['_links']['content']
-			z = requests.get(file_url, headers = headers, stream = True)
-			with open("tmp/" + filename, "wb") as f:
-				f.write(z.content)
-			f.close()
-			filelist.append(filename)
-	return filelist
+    baseurl = jira_url()
+    url = baseurl + "/rest/servicedeskapi/request/" + issueKey + "/attachment"
+    auth = jira_auth()
+    print("Got JIRA auth.")
+    headers = {
+        "Authorization": auth
+    }
+    filelist = list()
+    print("Got filelist.")
+    r = requests.get(url, headers = headers, stream = True)
+    print("Got JIRA issue payload.")
+    c = json.loads(r.content)
+    print("Converted issue payload to JSON.")
+    if not c['values']:
+        return None
+        print("No attachments to download.")
+    else:
+        for a in c['values']:
+            filename = a['filename']
+            file_url = a['_links']['content']
+            z = requests.get(file_url, headers = headers, stream = True)
+            with open("tmp/" + filename, "wb") as f:
+                f.write(z.content)
+            f.close()
+            filelist.append(filename)
+    print("Downloaded files.")
+    return filelist
 
 
 def onboard_user(issue, emp):
     try:
-        send_email(build_email("Test", emp, download_jira_attachments(issue.key)))
+        attachments = download_jira_attachments(issue.key)
+        print("Downloaded attachments.")
+        email = build_email("Test", emp, attachments)
+        print("Built test email.")
+        send_email(email)
+        print("Sent test email.")
         add_jirasd_comment(issue.key, "Test email sent.")
+        print("Added JIRA comment.")
+        
     except:
         add_jirasd_comment(issue.key, "Email failed to send to Cognos.")
+        print("Test email failed to send.")
 
     try:
-        sdesk-issue = create_SDESK_issue(emp)
-        add_jirasd_comment(issue.key, "IT ticket created: " + sdesk-issue)
+        sdesk_issue = create_SDESK_issue(emp)
+        add_jirasd_comment(issue.key, "IT ticket created: " + sdesk_issue)
+        print("Test issue created: " + sdesk_issue)
     except:
         add_jirasd_comment(issue.key, "Failed to alert IT.")
+        print("Test issue failed to create.")
 
 
 def change_user(issue, employee):

@@ -5,7 +5,6 @@ import sys
 import requests
 import json
 import base64
-from basicauth import encode
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
@@ -19,7 +18,7 @@ load_dotenv()
 def build_email(type, e, files=None):
     # Define required variables
     gmail_user = os.getenv("EMAIL_ACCT")
-
+    from_addr = os.getenv("HR_REPLYTO")
     toaddr = {
         "Cognos": os.getenv("HR_SEND_EMAILS"),
         "Manager": e.manager_email,
@@ -88,16 +87,16 @@ See you soon!""",
 
     # Build the email message
     msg = MIMEMultipart()
-    msg['From'] = gmail_user
+    msg['From'] = "Snapsheet HR <%s>" % from_addr
     msg['To'] = toaddr[type]
     msg['Subject'] = subj[type]
     msg.attach(MIMEText(body[type], 'plain'))
-
     # Identify and attach filelist
     if files != None:
+        tmp_path = os.getcwd() + "/tmp/"
         for f in files:
             part = MIMEBase('application', "octet-stream")
-            part.set_payload( open("/tmp/" + f,"rb").read() )
+            part.set_payload( open(tmp_path + f,"rb").read() )
             encoders.encode_base64(part)
             part.add_header('Content-Disposition', 'attachment; filename="%s"' % os.path.basename(f))
             msg.attach(part)
@@ -110,12 +109,12 @@ def send_email(msg):
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(gmail_user, gmail_password)
-        server.sendmail(gmail_user, msg['To'].split(","), msg.as_string())
+        server.sendmail(msg['From'], msg['To'].split(","), msg.as_string())
         server.quit()
 
 
 def add_jirasd_comment(issueKey, commentBody):
-    url = jira_url() + "/rest/servicedeskapi/request/" + issueKey + "/comment"
+    url = "%s/rest/servicedeskapi/request/%s/comment" % (jira_url(), issueKey)
     auth = jira_auth()
     headers = {
        "Accept": "application/json",
@@ -140,18 +139,24 @@ def add_jirasd_comment(issueKey, commentBody):
 def jira_auth():
     user = os.getenv("JIRA_ACCT")
     key = os.getenv("JIRA_API_KEY")
-    encoded_str = encode(user, key)
-    return encoded_str
+
+    combo = "%s:%s" % (user, key)
+
+    b64 = base64.b64encode(combo.encode()).decode()
+
+    auth = "Basic %s" % b64
+
+    return auth
 
 
 def jira_url():
     domain = os.getenv("JIRA_DOMAIN")
-    url = "https://" + domain + ".atlassian.net"
+    url = "https://%s.atlassian.net" % domain
     return url
 
 
 def create_SDESK_issue(employee):
-    url = jira_url() + "/rest/servicedeskapi/request"
+    url = "%s/rest/servicedeskapi/request" % jira_url()
     auth = jira_auth()
     headers = {
        "Accept": "application/json",
@@ -166,15 +171,11 @@ def create_SDESK_issue(employee):
             "description": f"""Title: {employee.title}
 Department: {employee.department}
 Manager: {employee.manager}""",
-            "customfield10076": f"{employee.start_date}"
-        },
-        "requestParticipants": [
-            "chris.garzon",
-            "jose.giron"
-        ]
+            "duedate": f"{employee.start_date}"
+        }
     }
 )
-
+    print(payload)
     response = requests.post(
        url,
        data=payload,
@@ -187,60 +188,96 @@ Manager: {employee.manager}""",
 
 
 def download_jira_attachments(issueKey):
+    tmp_path = os.getcwd() + "/tmp/"
     baseurl = jira_url()
-    url = baseurl + "/rest/servicedeskapi/request/" + issueKey + "/attachment"
+    # url = baseurl + "/rest/servicedeskapi/request/" + issueKey + "/attachment"
+    url = "%s/rest/servicedeskapi/request/%s/attachment" % (baseurl, issueKey)
     auth = jira_auth()
-    print("Got JIRA auth.")
     headers = {
         "Authorization": auth
     }
     filelist = list()
-    print("Got filelist.")
     r = requests.get(url, headers = headers, stream = True)
-    print("Got JIRA issue payload.")
     c = json.loads(r.content)
-    print("Converted issue payload to JSON.")
     if not c['values']:
         return None
-        print("No attachments to download.")
     else:
         for a in c['values']:
             filename = a['filename']
             file_url = a['_links']['content']
             z = requests.get(file_url, headers = headers, stream = True)
-            with open("tmp/" + filename, "wb") as f:
+            with open(tmp_path + filename, "wb") as f:
                 f.write(z.content)
             f.close()
             filelist.append(filename)
-    print("Downloaded files.")
     return filelist
 
 
+def link_jira_issues(parentkey, childkey):
+    print("Parent: %s" % parentkey)
+    print("Child: %s" % childkey)
+    baseurl = jira_url()
+    url = "%s/rest/api/3/issueLink" % baseurl
+    auth = jira_auth()
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": auth
+    }
+
+    payload = json.dumps( {
+        "outwardIssue": {"key": parentkey},
+        "inwardIssue": {"key": childkey},
+        "type": {"name": "Child"}
+        } )
+
+    response = requests.post(
+        url,
+        data = payload,
+        headers = headers
+    )
+    return response
+
+
 def onboard_user(issue, emp):
+    # Get any attachments before proceeding
+    attachments = download_jira_attachments(issue.key)
+
+    # Build and send the email to Cognos
+    email = build_email("Cognos", emp, attachments)
     try:
-        attachments = download_jira_attachments(issue.key)
-        print("Downloaded attachments.")
-        email = build_email("Test", emp, attachments)
-        print("Built test email.")
         send_email(email)
-        print("Sent test email.")
-        add_jirasd_comment(issue.key, "Test email sent.")
-        print("Added JIRA comment.")
-        
+        add_jirasd_comment(issue.key, "Email sent to Cognos.")
     except:
-        add_jirasd_comment(issue.key, "Email failed to send to Cognos.")
-        print("Test email failed to send.")
+        add_jirasd_comment(issue.key, "We could not send the email to Cognos. Please alert them manually.")
+
+    # Build and send the email to the employee's manager
+    email = build_email("Manager", emp)
+    try:
+        send_email(email)
+        add_jirasd_comment(issue.key, "Email sent to employee's manager: %s." % emp.manager)
+    except:
+        add_jirasd_comment(issue.key, "We could not send an email to %s" % emp.manager_email)
+
+    # Build and send the email to the new hire
+    email = build_email("New Hire", emp)
+    try:
+        send_email(email)
+        add_jirasd_comment(issue.key, "Welcome email sent to new hire.")
+    except:
+        add_jirasd_comment(issue.key, "We could not send the welcome email to the new hire: %s" % emp.email)
 
     try:
         sdesk_issue = create_SDESK_issue(emp)
-        add_jirasd_comment(issue.key, "IT ticket created: " + sdesk_issue)
-        print("Test issue created: " + sdesk_issue)
+        link_jira_issues(issue.key, sdesk_issue)
+        add_jirasd_comment(issue.key, "IT ticket created: %s" % sdesk_issue)
     except:
         add_jirasd_comment(issue.key, "Failed to alert IT.")
-        print("Test issue failed to create.")
+
+    add_jirasd_comment(issue.key, "Automation completed.")
 
 
-def change_user(issue, employee):
+def change_user(issue, emp):
     try:
         return {'status': "Success."}
     except:

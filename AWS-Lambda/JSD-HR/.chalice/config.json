@@ -5,13 +5,13 @@
     "dev": {
       "api_gateway_stage": "api",
       "environment_variables": {
-        "EMAIL_ACCT": "value",
+        "EMAIL_ACCT": "",
         "EMAIL_PWD": "",
         "JIRA_ACCT": "",
-        "JIRA_PWD": "",
         "JIRA_API_KEY": "",
-        "ATLASSIAN_URL": "",
-        "HR_SEND_EMAILS": ""
+        "JIRA_DOMAIN": "",
+        "HR_SEND_EMAILS": "",
+        "HR_REPLYTO": ""
       }
     }
   }

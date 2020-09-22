@@ -102,6 +102,7 @@ See you soon!""",
             msg.attach(part)
     return msg
 
+
 def send_email(msg):
     # Define sending variables
     gmail_user = os.getenv("EMAIL_ACCT")
@@ -124,7 +125,7 @@ def add_jirasd_comment(issueKey, commentBody):
     body = json.dumps( {
       "public": "false",
       "body": commentBody
-    }
+     }
 )
 
     response = requests.post(
